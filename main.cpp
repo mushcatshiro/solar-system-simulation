@@ -11,7 +11,6 @@
 #include <limits>
 // #include <glm/gtx/compatibility.hpp>
 
-
 /*
 lunar distance 384,400 km
 earth
@@ -24,7 +23,6 @@ moon
 
 cpp float range [3.4e-38, 3.4e+38]
 */
-
 
 constexpr float ViewportWidth = 800.f;
 constexpr float ViewportHeight = 800.f;
@@ -99,8 +97,12 @@ glm::vec2 calculateGForce(const PlanetaryObj& earth, const PlanetaryObj& moon) {
   return mag * unitDirection;
 };
 
-int main()
-{
+int main() {
+  /*
+  TODO
+  - center of mass frame?
+  - euler integration/velocity verlet/rk4
+  */
   // create the window
   std::feclearexcept(FE_OVERFLOW);
   sf::RenderWindow window(sf::VideoMode({static_cast<unsigned int>(ViewportWidth), static_cast<unsigned int>(ViewportHeight)}), "My window");
@@ -109,6 +111,7 @@ int main()
   // Calculate initial orbital velocity for a stable circular orbit
   // float orbital_velocity = glm::sqrt((G * earth.mass) / LunarDistance);
   moon.vy = 1.076e3;
+  earth.vy = -(moon.vy * moon.mass) / earth.mass; // conservation of momentum
   // std::cout << moon.vy << std::endl;
 
   // run the program as long as the window is open
