@@ -27,19 +27,21 @@ cpp float range [3.4e-38, 3.4e+38]
 constexpr float ViewportWidth = 800.f;
 constexpr float ViewportHeight = 800.f;
 constexpr float AstronomicalUnit = 1.4960e11;
-constexpr float LunarDistance = 384400000.f; // in m
+constexpr float LunarDistance = 3.844e8; // in m
 constexpr float SunRadius = 6.96e8;
-constexpr float EarthRadius = 6371000.f;     // in m
-constexpr float MoonRadius = 1737000.f;      // in m
+constexpr float EarthRadius = 6.371e6;     // in m
+constexpr float MoonRadius = 1.737e6;      // in m
 constexpr float G = 6.67430e-11f;            // Gravitational constant in m^3 kg^-1 s^-2
 constexpr float MassSun = 1.989e30;
 constexpr float MassEarth = 5.972e24f;       // kg
 constexpr float MassMoon = 7.342e22f;        // kg
 constexpr float t = 86400.f;               // 1 tick = 1 hour (3600 seconds)
 constexpr float m2vp = (ViewportWidth) / (440000000.f * 2); // pix/km
+constexpr size_t ListLength = 32;
+constexpr int HeadGreyValue = 200;
 
 struct PlanetaryObj {
-  // sf::CircleShape shape;
+  sf::CircleShape shape;
   float x;
   float y;
   float radius;
@@ -48,19 +50,23 @@ struct PlanetaryObj {
   float vy;
   sf::Color color;
   std::vector<sf::CircleShape> trail;
+  bool showTrail;
 
-  PlanetaryObj(float x_m, float y_m, float r_m, float m_kg, sf::Color c)
-    : x(x_m), y(y_m), radius(r_m), mass(m_kg), color(c) {  // , shape(r_m * m2vp)
+  PlanetaryObj(float x_m, float y_m, float r_m, float m_kg, sf::Color c, bool st)
+    : x(x_m), y(y_m), radius(r_m), mass(m_kg), color(c), shape(r_m * m2vp), showTrail(st) {
     vx = 0.f;
     vy = 0.f;
   }
 
   void updatePos(glm::vec2 acceleration, bool debug) {
-    sf::CircleShape trailPoint(5.f); // Adjust the size and color as needed
-    trailPoint.setFillColor(sf::Color(color.r, color.g, color.b, 128)); // Slightly transparent
-    trailPoint.setOrigin({5.f, 5.f});
+    sf::CircleShape trailPoint(radius * m2vp); // Adjust the size and color as needed
+    // trailPoint.setFillColor(sf::Color(color.r, color.r, color.r, 127)); // Slightly transparent
+    trailPoint.setOrigin({trailPoint.getRadius(), trailPoint.getRadius()});
     trailPoint.setPosition({ViewportWidth / 2.f + x * m2vp, ViewportHeight / 2.f + y * m2vp});
     trail.push_back(trailPoint);
+    if (trail.size() >= ListLength) {
+      trail.erase(trail.begin());
+    }
 
     this->vx += acceleration.x * t;
     this->vy += acceleration.y * t;
@@ -73,10 +79,24 @@ struct PlanetaryObj {
   };
 
   void render(sf::RenderWindow& window) {
-    for (const auto& trailPoint : trail) {
-      window.draw(trailPoint);
+    /*
+    unsuccessful attempt to show trail with color spectrum indicating start/end
+    */
+    // for (size_t i = 0; i < trail.size(); i++) {
+    //   sf::CircleShape t = trail[i];
+    //   t.setFillColor(sf::Color{
+    //     static_cast<int>(HeadGreyValue) - i * 2,
+    //     static_cast<int>(HeadGreyValue) - i * 2,
+    //     static_cast<int>(HeadGreyValue) - i * 2
+    //   });
+    //   window.draw(t);
+    // }
+    if (showTrail) {
+      for (const auto& trailPoint : trail) {
+        window.draw(trailPoint);
+      }
     }
-    sf::CircleShape shape = sf::CircleShape{radius * m2vp};
+    
     shape.setOrigin({shape.getRadius(), shape.getRadius()});
     shape.setFillColor(color);
     shape.setPosition({ViewportWidth / 2.f + x * m2vp, ViewportHeight / 2.f + y * m2vp});
@@ -84,8 +104,8 @@ struct PlanetaryObj {
   };
 };
 
-PlanetaryObj earth{0., 0., EarthRadius, MassEarth, sf::Color(100, 250, 50)};
-PlanetaryObj moon{3.633e8, 0., MoonRadius, MassMoon, sf::Color(100, 50, 250)};
+PlanetaryObj earth{0., 0., EarthRadius, MassEarth, sf::Color(100, 250, 50), false};
+PlanetaryObj moon{3.633e8, 0., MoonRadius, MassMoon, sf::Color(100, 50, 250), true};
 
 glm::vec2 calculateGForce(const PlanetaryObj& earth, const PlanetaryObj& moon) {
   // calculates f earth exerts on moon, direction is towards earth
@@ -109,10 +129,8 @@ int main() {
   int ctr = 0;
 
   // Calculate initial orbital velocity for a stable circular orbit
-  // float orbital_velocity = glm::sqrt((G * earth.mass) / LunarDistance);
   moon.vy = 1.076e3;
   earth.vy = -(moon.vy * moon.mass) / earth.mass; // conservation of momentum
-  // std::cout << moon.vy << std::endl;
 
   // run the program as long as the window is open
   while (window.isOpen()) {
@@ -122,19 +140,12 @@ int main() {
       if (event->is<sf::Event::Closed>())
         window.close();
     }
-    // if (ctr == 10) {
-    //   window.close();
-    // }
 
     glm::vec2 F = calculateGForce(earth, moon);
     glm::vec2 accelEarth = -F / earth.mass;
     glm::vec2 accelMoon = F / moon.mass;
     earth.updatePos(accelEarth, false);
     moon.updatePos(accelMoon, false);
-    // std::cout << "Earth posx: " << earth.x << std::endl;
-    // std::cout << "Earth posy: " << earth.y << std::endl;
-    // std::cout << "Moon posx: " << moon.x << std::endl;
-    // std::cout << "Moon posy: " << moon.y << std::endl;
 
     // clear the window with black color
     window.clear(sf::Color::Black);
@@ -154,6 +165,6 @@ int main() {
   } else {
     std::cout << "No floating-point overflow." << std::endl;
   }
-  while (true) {}
+  // while (true) {}
   return 0;
 }
