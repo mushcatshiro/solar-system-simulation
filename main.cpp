@@ -47,17 +47,19 @@ struct CelestialObj {
     vy = 0.f;
   }
 
-  glm::vec2 calculateGForce(std::vector<CelestialObj> celestialBodies, bool debug) {
-    glm::vec2 acceleration;
-    for (const auto& c : celestialBodies) {
-      if (c.name != name) {
-        glm::vec2 direction = glm::vec2{c.x, c.y} - glm::vec2{x, y};
+  glm::vec2 calculateGForce(std::vector<CelestialObj> celestialBodies) {
+    glm::vec2 acceleration = glm::vec2{0., 0.};
+    for (auto& c : celestialBodies) {
+      if (c.name != this->name) {
+        glm::vec2 direction = glm::vec2{c.x, c.y} - glm::vec2{this->x, this->y};
         float r = glm::length(direction);  // sqrt((x^2) + (y^2))
         glm::vec2 unitDirection = direction / r;
         acceleration += (c.mass / (r * r)) * unitDirection;
+        std::cout << "here" << std::endl;
       }
     }
     acceleration *= GravitationalConstant;
+    std::cout << acceleration.x << " " << acceleration.y << std::endl;
     return acceleration;
   }
 
@@ -121,14 +123,14 @@ CelestialObj pluto{"pluto", PlutoDistanceFromSun, 0., PlutoRadius, PlutoMass, sf
 
 std::vector<CelestialObj> solarSystem = {earth, moon};
 
-// glm::vec2 calculateGForce(const CelestialObj& p1, const CelestialObj& p2) {
-//   // calculates f `p1` exerts on `p2`, direction is towards `p1`
-//   glm::vec2 direction = glm::vec2{p1.x, p1.y} - glm::vec2{p2.x, p2.y};
-//   float r = glm::length(direction);  // sqrt((x^2) + (y^2))
-//   glm::vec2 unitDirection = direction / r;
-//   float mag = GravitationalConstant * p1.mass * p2.mass / (r * r);
-//   return mag * unitDirection;
-// };
+glm::vec2 calculateGForce(const CelestialObj& p1, const CelestialObj& p2) {
+  // calculates f `p1` exerts on `p2`, direction is towards `p1`
+  glm::vec2 direction = glm::vec2{p1.x, p1.y} - glm::vec2{p2.x, p2.y};
+  float r = glm::length(direction);  // sqrt((x^2) + (y^2))
+  glm::vec2 unitDirection = direction / r;
+  float mag = GravitationalConstant * p1.mass * p2.mass / (r * r);
+  return mag * unitDirection;
+};
 
 int main() {
   /*
@@ -160,7 +162,7 @@ int main() {
     // earth.updatePos(accelEarth, false);
     // moon.updatePos(accelMoon, false);
     for (auto& c: solarSystem) {
-      glm::vec2 a = c.calculateGForce(solarSystem, false);
+      glm::vec2 a = c.calculateGForce(solarSystem);
       c.updatePos(a, false);
     }
 
