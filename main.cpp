@@ -7,35 +7,21 @@
 #include <chrono> // For std::chrono::seconds and other time durations
 #include <thread>
 
+// check for float overflow
 #include <cfenv>
 #include <limits>
-// #include <glm/gtx/compatibility.hpp>
+
+// constants
+#include <celestialconst.hpp>
+using namespace CelestialConst;
 
 /*
-lunar distance 384,400 km
-earth
-  mean radius 6371 km
-  mass 5.972 x 10^24 kg
-  
-moon
-  mean radius 1737.4 km
-  mass 7.346 x 10^22 kg
-
 cpp float range [3.4e-38, 3.4e+38]
 */
 
 constexpr float ViewportWidth = 800.f;
 constexpr float ViewportHeight = 800.f;
-constexpr float AstronomicalUnit = 1.4960e11;
-constexpr float LunarDistance = 3.844e8; // in m
-constexpr float SunRadius = 6.96e8;
-constexpr float EarthRadius = 6.371e6;     // in m
-constexpr float MoonRadius = 1.737e6;      // in m
-constexpr float G = 6.67430e-11f;            // Gravitational constant in m^3 kg^-1 s^-2
-constexpr float MassSun = 1.989e30;
-constexpr float MassEarth = 5.972e24f;       // kg
-constexpr float MassMoon = 7.342e22f;        // kg
-constexpr float t = 86400.f;               // 1 tick = 1 hour (3600 seconds)
+constexpr float t = 86400.f;  // 1 tick = 1 hour (3600 seconds)
 constexpr float m2vp = (ViewportWidth) / (440000000.f * 2); // pix/km
 constexpr size_t ListLength = 32;
 constexpr int HeadGreyValue = 200;
@@ -104,16 +90,15 @@ struct PlanetaryObj {
   };
 };
 
-PlanetaryObj earth{0., 0., EarthRadius, MassEarth, sf::Color(100, 250, 50), false};
-PlanetaryObj moon{3.633e8, 0., MoonRadius, MassMoon, sf::Color(100, 50, 250), true};
+PlanetaryObj earth{0., 0., EarthRadius, EarthMass, sf::Color(100, 250, 50), false};
+PlanetaryObj moon{3.633e8, 0., MoonRadius, MoonMass, sf::Color(100, 50, 250), true};
 
-glm::vec2 calculateGForce(const PlanetaryObj& earth, const PlanetaryObj& moon) {
-  // calculates f earth exerts on moon, direction is towards earth
-  glm::vec2 direction = glm::vec2{earth.x, earth.y} - glm::vec2{moon.x, moon.y};
+glm::vec2 calculateGForce(const PlanetaryObj& p1, const PlanetaryObj& p2) {
+  // calculates f `p1` exerts on `p2`, direction is towards `p1`
+  glm::vec2 direction = glm::vec2{p1.x, p1.y} - glm::vec2{p2.x, p2.y};
   float r = glm::length(direction);  // sqrt((x^2) + (y^2))
   glm::vec2 unitDirection = direction / r;
-  float mag = G * earth.mass * moon.mass / (r * r);
-  std::cout << unitDirection.x << unitDirection.y << std::endl;
+  float mag = GravitationalConstant * p1.mass * p2.mass / (r * r);
   return mag * unitDirection;
 };
 
