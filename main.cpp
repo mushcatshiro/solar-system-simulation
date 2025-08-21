@@ -40,27 +40,26 @@ struct CelestialObj {
   sf::Color color;
   std::vector<sf::CircleShape> trail;
   bool showTrail;
+  glm::vec2 acceleration;
 
   CelestialObj(std::string n, float x_m, float y_m, float r_m, float m_kg, sf::Color c, bool st)
     : name(n), x(x_m), y(y_m), radius(r_m), mass(m_kg), color(c), shape(r_m * m2vp), showTrail(st) {
     vx = 0.f;
     vy = 0.f;
+    acceleration = glm::vec2{0., 0.};
   }
 
-  glm::vec2 calculateGForce(std::vector<CelestialObj> celestialBodies) {
-    glm::vec2 acceleration = glm::vec2{0., 0.};
+  void calculateAcceleration(std::vector<CelestialObj> celestialBodies) {
+    acceleration = glm::vec2{0.f, 0.f};
     for (auto& c : celestialBodies) {
       if (c.name != this->name) {
         glm::vec2 direction = glm::vec2{c.x, c.y} - glm::vec2{this->x, this->y};
         float r = glm::length(direction);  // sqrt((x^2) + (y^2))
         glm::vec2 unitDirection = direction / r;
-        acceleration += (c.mass / (r * r)) * unitDirection;
-        std::cout << "here" << std::endl;
+        acceleration += c.mass / (r * r) * unitDirection;
       }
     }
     acceleration *= GravitationalConstant;
-    std::cout << acceleration.x << " " << acceleration.y << std::endl;
-    return acceleration;
   }
 
   void updatePos(glm::vec2 acceleration, bool debug) {
@@ -138,7 +137,6 @@ int main() {
   - center of mass frame?
   - euler integration/velocity verlet/rk4
   */
-  // create the window
   std::feclearexcept(FE_OVERFLOW);
   sf::RenderWindow window(sf::VideoMode({static_cast<unsigned int>(ViewportWidth), static_cast<unsigned int>(ViewportHeight)}), "Solar System Simulation");
   int ctr = 0;
@@ -162,13 +160,14 @@ int main() {
     // earth.updatePos(accelEarth, false);
     // moon.updatePos(accelMoon, false);
     for (auto& c: solarSystem) {
-      glm::vec2 a = c.calculateGForce(solarSystem);
-      c.updatePos(a, false);
+      c.calculateAcceleration(solarSystem);
+    }
+    for (auto& c: solarSystem) {
+      c.updatePos(c.acceleration, false);
     }
 
     // clear the window with black color
     window.clear(sf::Color::Black);
-    // draw everything here...
     earth.render(window);
     moon.render(window);
 
