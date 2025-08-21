@@ -54,8 +54,7 @@ struct CelestialObj {
         glm::vec2 direction = glm::vec2{c.x, c.y} - glm::vec2{this->x, this->y};
         float r = glm::length(direction);  // sqrt((x^2) + (y^2))
         glm::vec2 unitDirection = direction / r;
-        acceleration += (c.mass / (r * r)) * unitDirection;
-        std::cout << "here" << std::endl;
+        acceleration += (this->mass / (r * r)) * unitDirection;
       }
     }
     acceleration *= GravitationalConstant;
@@ -156,15 +155,15 @@ int main() {
         window.close();
     }
 
-    // glm::vec2 F = calculateGForce(earth, moon);
-    // glm::vec2 accelEarth = -F / earth.mass;
-    // glm::vec2 accelMoon = F / moon.mass;
-    // earth.updatePos(accelEarth, false);
-    // moon.updatePos(accelMoon, false);
-    for (auto& c: solarSystem) {
-      glm::vec2 a = c.calculateGForce(solarSystem);
-      c.updatePos(a, false);
-    }
+    glm::vec2 F = calculateGForce(earth, moon);
+    glm::vec2 accelEarth = -F / earth.mass;
+    glm::vec2 accelMoon = F / moon.mass;
+    earth.updatePos(accelEarth, false);
+    moon.updatePos(accelMoon, false);
+    // for (auto& c: solarSystem) {
+    //   glm::vec2 a = c.calculateGForce(solarSystem);
+    //   c.updatePos(a, false);
+    // }
 
     // clear the window with black color
     window.clear(sf::Color::Black);
@@ -184,6 +183,6 @@ int main() {
   } else {
     std::cout << "No floating-point overflow." << std::endl;
   }
-  // while (true) {}
+  while (true) {}
   return 0;
 }
