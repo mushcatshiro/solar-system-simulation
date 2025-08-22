@@ -37,7 +37,7 @@ namespace CelestialConst {
 
   // Moon
   constexpr float MoonRadius = 1.737e6;
-  constexpr float MoondDistanceFromEarth = 0.0026;
+  constexpr float MoondDistanceFromEarth = 0.00243;
   constexpr float MoonMass = 7.342e22;  // 0.013
   constexpr float MoonOrbitalSpeed = 1.022e3;
   constexpr float MoonSemiMajorAxis = 0.00257;
