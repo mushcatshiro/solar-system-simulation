@@ -46,20 +46,23 @@ struct CelestialObj {
     : name(n), x(x_m), y(y_m), radius(r_m), mass(m_kg), color(c), shape(r_m * m2vp), showTrail(st) {
     vx = 0.f;
     vy = 0.f;
-    acceleration = glm::vec2{0., 0.};
+    acceleration.x = 0.0f;
+    acceleration.y = 0.0f;
   }
 
-  void calculateAcceleration(std::vector<CelestialObj> celestialBodies) {
-    acceleration = glm::vec2{0.f, 0.f};
-    for (auto& c : celestialBodies) {
-      if (c.name != this->name) {
-        glm::vec2 direction = glm::vec2{c.x, c.y} - glm::vec2{this->x, this->y};
+  void calculateAcceleration(std::vector<CelestialObj*> celestialBodies) {
+    // acceleration = glm::vec2(0.f, 0.f);
+    this->acceleration.x = 0.0f;
+    this->acceleration.y = 0.0f;
+    for (CelestialObj* c : celestialBodies) {
+      if (c->name != this->name) {
+        glm::vec2 direction = glm::vec2{c->x, c->y} - glm::vec2{this->x, this->y};
         float r = glm::length(direction);  // sqrt((x^2) + (y^2))
         glm::vec2 unitDirection = direction / r;
-        acceleration += c.mass / (r * r) * unitDirection;
+        this->acceleration += c->mass / (r * r) * unitDirection;
       }
     }
-    acceleration *= GravitationalConstant;
+    this->acceleration *= GravitationalConstant;
   }
 
   void updatePos(glm::vec2 acceleration, bool debug) {
@@ -120,7 +123,7 @@ CelestialObj uranus{"uranus", UranusDistanceFromSun, 0., UranusRadius, UranusMas
 CelestialObj neptune{"neptune", NeptuneDistanceFromSun, 0., NeptuneRadius, NeptuneMass, sf::Color(124, 183, 187), true};
 CelestialObj pluto{"pluto", PlutoDistanceFromSun, 0., PlutoRadius, PlutoMass, sf::Color(146, 168, 164), true};
 
-std::vector<CelestialObj> solarSystem = {earth, moon};
+std::vector<CelestialObj*> solarSystem = {&earth, &moon};
 
 glm::vec2 calculateGForce(const CelestialObj& p1, const CelestialObj& p2) {
   // calculates f `p1` exerts on `p2`, direction is towards `p1`
@@ -159,12 +162,16 @@ int main() {
     // glm::vec2 accelMoon = F / moon.mass;
     // earth.updatePos(accelEarth, false);
     // moon.updatePos(accelMoon, false);
-    for (auto& c: solarSystem) {
-      c.calculateAcceleration(solarSystem);
+    for (CelestialObj* c: solarSystem) {
+      c->calculateAcceleration(solarSystem);
     }
-    for (auto& c: solarSystem) {
-      c.updatePos(c.acceleration, false);
+    for (CelestialObj* c: solarSystem) {
+      c->updatePos(c->acceleration, false);
     }
+    // earth.calculateAcceleration(solarSystem);
+    // moon.calculateAcceleration(solarSystem);
+    // earth.updatePos(earth.acceleration, false);
+    // moon.updatePos(moon.acceleration, false);
 
     // clear the window with black color
     window.clear(sf::Color::Black);
