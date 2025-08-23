@@ -135,6 +135,8 @@ int main() {
   int ctr = 0;
   sf::View view;
   float zoomVal = 1.0f;
+  bool isPanning = false;
+  sf::Vector2i lastMousePos;
 
   // Calculate initial orbital velocity for a stable circular orbit
   moon.vy = -1.076e3;
@@ -151,6 +153,20 @@ int main() {
         float delta = scroll->delta;
         view.zoom(zoomVal + 0.1f * (delta > 0 ? -1.f : 1.f));
         window.setView(view);
+      }
+      if (event->is<sf::Event::MouseButtonPressed>()) {
+        isPanning = true;
+        lastMousePos = sf::Mouse::getPosition(window);
+      }else if (event->is<sf::Event::MouseButtonReleased>()) {
+        isPanning = false;
+      } else if (event->is<sf::Event::MouseMoved>()) {
+        if (isPanning) {
+          sf::Vector2i currentMousePos = sf::Mouse::getPosition(window);
+          sf::Vector2f delta = window.mapPixelToCoords(lastMousePos) - window.mapPixelToCoords(currentMousePos);
+          view.move(delta);
+          lastMousePos = currentMousePos;
+          window.setView(view);
+        }
       }
     }
 
