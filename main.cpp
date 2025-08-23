@@ -133,6 +133,8 @@ int main() {
   std::feclearexcept(FE_OVERFLOW);
   sf::RenderWindow window(sf::VideoMode({static_cast<unsigned int>(ViewportWidth), static_cast<unsigned int>(ViewportHeight)}), "Solar System Simulation");
   int ctr = 0;
+  sf::View view;
+  float zoomVal = 1.0f;
 
   // Calculate initial orbital velocity for a stable circular orbit
   moon.vy = -1.076e3;
@@ -145,13 +147,18 @@ int main() {
       // "close requested" event: we close the window
       if (event->is<sf::Event::Closed>())
         window.close();
+      if (const auto* scroll = event->getIf<sf::Event::MouseWheelScrolled>()) {
+        float delta = scroll->delta;
+        view.zoom(zoomVal + 0.1f * (delta > 0 ? -1.f : 1.f));
+        window.setView(view);
+      }
     }
 
     for (CelestialObj* c: solarSystem) {
       c->calculateAcceleration(solarSystem);
     }
     for (CelestialObj* c: solarSystem) {
-      c->updatePos(c->acceleration, true);
+      c->updatePos(c->acceleration, false);
     }
 
     // clear the window with black color
