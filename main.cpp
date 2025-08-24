@@ -24,7 +24,7 @@ constexpr float ViewportWidth = 800.f;
 constexpr float ViewportHeight = 800.f;
 constexpr float t = 86400.f;  // 1 tick = 1 hour (3600 seconds)
 constexpr float m2vp = (ViewportWidth) / (440000000.f * 2); // pix/m
-constexpr float au2vp = (ViewportWidth) / (MoondDistanceFromEarth * 2.f);  // pix/au
+constexpr float au2vp = (ViewportWidth) / (10.0f);  // pix/au
 constexpr size_t ListLength = 32;
 constexpr int HeadGreyValue = 200;
 
@@ -42,12 +42,23 @@ struct CelestialObj {
   bool showTrail;
   glm::vec2 acceleration;
 
-  CelestialObj(std::string n, float x_m, float y_m, float r_m, float m_kg, sf::Color c, bool st)
-    : name(n), x(x_m), y(y_m), radius(r_m), mass(m_kg), color(c), shape(r_m * m2vp), showTrail(st) {
+  CelestialObj(std::string n, float x_m, float y_m, float r_m, float m_kg, float o_v, sf::Color c, bool st)
+    : name(n), x(x_m), y(y_m), radius(r_m), mass(m_kg), vy(o_v), color(c), shape(10.), showTrail(st) {
     vx = 0.f;
-    vy = 0.f;
+    // vy = 0.f;
     acceleration.x = 0.0f;
     acceleration.y = 0.0f;
+  }
+
+  void setInitialVelocityY(std::vector<CelestialObj*> celestialBodies) {
+    // unused yet still not observing issues
+    float momentum;
+    for (CelestialObj* c : celestialBodies) {
+      if (c->name != this->name) {
+        momentum += c->vy * c->mass;
+      }
+    }
+    this->vy = (momentum / this->mass) * -1.f;
   }
 
   void calculateAcceleration(std::vector<CelestialObj*> celestialBodies) {
@@ -66,7 +77,7 @@ struct CelestialObj {
   }
 
   void updatePos(glm::vec2 acceleration, bool debug) {
-    sf::CircleShape trailPoint(radius * m2vp); // Adjust the size and color as needed
+    sf::CircleShape trailPoint(7.0); // Adjust the size and color as needed
     trailPoint.setOrigin({trailPoint.getRadius(), trailPoint.getRadius()});
     trailPoint.setPosition({ViewportWidth / 2.f + x * au2vp, ViewportHeight / 2.f + y * au2vp});
     trail.push_back(trailPoint);
@@ -110,19 +121,19 @@ struct CelestialObj {
   };
 };
 
-CelestialObj sun{"sun", 0., 0., SunRadius, SunMass, sf::Color{200, 200, 10}, false};
-CelestialObj mecury{"mecury", MecuryDistanceFromSun, 0., MecuryRadius, MecuryMass, sf::Color(116, 123, 129), true};
-CelestialObj venus{"venus", VenusDistanceFromSun, 0.,  VenusRadius, VenusMass, sf::Color(255, 198, 73), true};
-CelestialObj earth{"earth", 0., 0., EarthRadius, EarthMass, sf::Color(159, 193, 100), false};
-CelestialObj moon{"moon", MoondDistanceFromEarth, 0., MoonRadius, MoonMass, sf::Color(201, 201, 201), true};
-CelestialObj mars{"mars", MarsDistanceFromSun, 0., MarsRadius, MarsMass, sf::Color(129, 37, 27), true};
-CelestialObj jupiter{"jupiter", JupiterDistanceFromSun, 0., JupiterRadius, JupiterMass, sf::Color(188, 175, 178), true};
-CelestialObj saturn{"saturn", SaturnDistanceFromSun, 0., SaturnRadius, SaturnMass, sf::Color(196, 188, 170), true};
-CelestialObj uranus{"uranus", UranusDistanceFromSun, 0., UranusRadius, UranusMass, sf::Color(172, 229, 238), true};
-CelestialObj neptune{"neptune", NeptuneDistanceFromSun, 0., NeptuneRadius, NeptuneMass, sf::Color(124, 183, 187), true};
-CelestialObj pluto{"pluto", PlutoDistanceFromSun, 0., PlutoRadius, PlutoMass, sf::Color(146, 168, 164), true};
+CelestialObj sun{"sun", 0., 0., SunRadius, SunMass, 0.01, sf::Color{200, 200, 10}, false};
+CelestialObj mecury{"mecury", MecuryDistanceFromSun, 0., MecuryRadius, MecuryMass, MecuryOrbitalSpeed, sf::Color(116, 123, 129), true};
+CelestialObj venus{"venus", VenusDistanceFromSun, 0.,  VenusRadius, VenusMass, VenusOrbitalSpeed, sf::Color(255, 198, 73), true};
+CelestialObj earth{"earth", EarthDistanceFromSun, 0., EarthRadius, EarthMass, EarthOrbitalSpeed, sf::Color(159, 193, 100), true};
+CelestialObj moon{"moon", MoondDistanceFromEarth, 0., MoonRadius, MoonMass, MoonOrbitalSpeed, sf::Color(201, 201, 201), true};
+CelestialObj mars{"mars", MarsDistanceFromSun, 0., MarsRadius, MarsMass, MarsOrbitalSpeed, sf::Color(129, 37, 27), true};
+CelestialObj jupiter{"jupiter", JupiterDistanceFromSun, 0., JupiterRadius, JupiterMass, JupiterOrbitalSpeed, sf::Color(188, 175, 178), true};
+CelestialObj saturn{"saturn", SaturnDistanceFromSun, 0., SaturnRadius, SaturnMass, SaturnOrbitalSpeed, sf::Color(196, 188, 170), true};
+CelestialObj uranus{"uranus", UranusDistanceFromSun, 0., UranusRadius, UranusMass, UranusOrbitalSpeed, sf::Color(172, 229, 238), true};
+CelestialObj neptune{"neptune", NeptuneDistanceFromSun, 0., NeptuneRadius, NeptuneMass, NeptuneOrbitalSpeed, sf::Color(124, 183, 187), true};
+CelestialObj pluto{"pluto", PlutoDistanceFromSun, 0., PlutoRadius, PlutoMass, PlutoOrbitalSpeed, sf::Color(146, 168, 164), true};
 
-std::vector<CelestialObj*> solarSystem = {&earth, &moon};
+std::vector<CelestialObj*> solarSystem = {&sun, &mecury, &venus, &earth, &mars, &jupiter, &saturn, &uranus, &neptune, &pluto};
 
 int main() {
   /*
@@ -139,8 +150,10 @@ int main() {
   sf::Vector2i lastMousePos;
 
   // Calculate initial orbital velocity for a stable circular orbit
-  moon.vy = -1.076e3;
-  earth.vy = -(moon.vy * moon.mass) / earth.mass; // conservation of momentum
+  // moon.vy = -1.076e3;
+  // earth.vy = -(moon.vy * moon.mass) / earth.mass; // conservation of momentum
+  // earth.vy = EarthOrbitalSpeed;
+  // sun.vy = -(earth.vy * earth.mass) / sun.mass;
 
   // run the program as long as the window is open
   while (window.isOpen()) {
@@ -179,15 +192,16 @@ int main() {
 
     // clear the window with black color
     window.clear(sf::Color::Black);
-    earth.render(window);
-    moon.render(window);
+    for (CelestialObj* c: solarSystem) {
+      c->render(window);
+    }
 
     // end the current frame
     window.display();
     ctr += 1;
     // std::cout << "ctr: " << ctr << std::endl;
     // std::this_thread::sleep_for(std::chrono::microseconds(100));
-    // std::this_thread::sleep_for(std::chrono::seconds(1)); 
+    // std::this_thread::sleep_for(std::chrono::seconds(2)); 
   }
   if (std::fetestexcept(FE_OVERFLOW)) {
     std::cout << "Floating-point overflow detected!" << std::endl;
